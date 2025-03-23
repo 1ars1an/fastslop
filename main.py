@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from schemas import GenreURLChoices, Band
 
 app = FastAPI()
 
@@ -17,13 +18,16 @@ async def root() -> dict[str, str]:
     return {"message": "Hello World"}
 
 @app.get("/bands")
-async def get_bands() -> list[dict]:
-    return BANDS
+async def get_bands() -> list[Band]:
+    return [Band(**b) for b in BANDS]
 
-@app.get("/bands/{band_id}")
-async def get_band(band_id: int) -> str:
-    band = next((b for b in BANDS if b["id"] == band_id), None)
-    if band:
-        return band
-    else:
-        return {"message": "Band not found"}
+@app.get("/bands/{band_id}") 
+async def get_band(band_id: int) -> Band:
+    band = next((Band(**b) for b in BANDS if b["id"] == band_id), None)
+    if band is None:
+        raise HTTPException(status_code=404, detail="Band not found")
+    return band
+
+@app.get("/genres/{genre}")
+async def get_bands_by_genre(genre: GenreURLChoices) -> list[dict]:
+    return [b for b in BANDS if b["genre"].lower() == genre.value]
