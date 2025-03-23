@@ -18,7 +18,9 @@ async def root() -> dict[str, str]:
     return {"message": "Hello World"}
 
 @app.get("/bands")
-async def get_bands() -> list[Band]:
+async def get_bands(genre: GenreURLChoices | None = None) -> list[Band]:
+    if genre:
+        return [Band(**b) for b in BANDS if b["genre"].lower() == genre.value]
     return [Band(**b) for b in BANDS]
 
 @app.get("/bands/{band_id}") 
