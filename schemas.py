@@ -19,3 +19,9 @@ class BandCreate(BandBase):
 
 class BandWithID(BandBase):
     id: int
+
+class User(BaseModel):
+    username: str
+    email: str | None = None
+    full_name: str | None = None
+    disabled: bool | None = None

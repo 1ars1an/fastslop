@@ -1,7 +1,34 @@
-from fastapi import FastAPI, HTTPException
-from schemas import GenreURLChoices, BandCreate, BandWithID
+from fastapi import FastAPI, HTTPException, Depends
+from schemas import GenreURLChoices, BandCreate, BandWithID, User
+from fastapi.security import OAuth2PasswordBearer
+from typing import Annotated
 
 app = FastAPI()
+
+@app.post("/token")
+async def login():
+    return {"access_token": "fake-token", "token_type": "bearer"}
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+@app.get("/items/")
+async def read_items(token: Annotated[str, Depends(oauth2_scheme)]):
+    return {"token": token}
+
+def fake_decode_token(token):
+    return User(
+        username=token + "fakedecoded", email="john@example.com", full_name="John Doe"
+    )
+
+
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+    user = fake_decode_token(token)
+    return user
+
+
+@app.get("/users/me")
+async def read_users_me(current_user: Annotated[User, Depends(get_current_user)]):
+    return current_user
 
 BANDS = [
     {"id": 1, "name": "The Electric Unicorns", "genre": "Synth Rock"},
@@ -16,6 +43,10 @@ BANDS = [
 @app.get("/")
 async def root() -> dict[str, str]:
     return {"message": "Hello World"}
+
+@app.get("/madboy")
+async def root() -> dict[str, str]:
+    return {"message": "mad boy"}
 
 @app.get("/bands")
 async def get_bands(genre: GenreURLChoices | None = None) -> list[BandWithID]:
